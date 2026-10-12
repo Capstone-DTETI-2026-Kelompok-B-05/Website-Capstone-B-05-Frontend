@@ -1,0 +1,190 @@
+/* Kartu profil */
+.sb-profile {
+  position: relative;
+  flex-shrink: 0;
+  margin: 18px 4px 0;
+  padding: 14px;
+  overflow: hidden;
+  color: #edf4ff;
+  background: linear-gradient(
+    135deg,
+    #243e65,
+    #1a2d4b
+  );
+  border: 1px solid #ffffff14;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px #07132620;
+}
+
+/* Aksen dekoratif */
+.sb-profile::before {
+  content: '';
+  position: absolute;
+  top: -32px;
+  right: -28px;
+  width: 100px;
+  height: 100px;
+  box-sizing: border-box;
+  border: 18px solid #76abff0a;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Identitas pengguna */
+.sb-profile-identity {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sb-profile-avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    #6da8ff,
+    #3267dd
+  );
+  border: 1px solid #ffffff30;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px #0a183640;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sb-profile-details {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  justify-items: start;
+  gap: 4px;
+}
+
+.sb-profile-caption {
+  color: #a5b9d5;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.sb-profile-name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: #f4f8ff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badge role */
+.sb-profile-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.sb-profile-role.is-admin {
+  color: #bcd7ff;
+  background: #6da8ff18;
+  border-color: #6da8ff25;
+}
+
+.sb-profile-role.is-staff {
+  color: #a5ebd1;
+  background: #48cf9c18;
+  border-color: #48cf9c25;
+}
+
+.sb-profile-role svg {
+  flex-shrink: 0;
+}
+
+/* Tombol keluar */
+.sb-profile-logout {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 9px 10px;
+  color: #dbe7fa;
+  background: #0d1c332e;
+  border: 1px solid #ffffff14;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.sb-profile-logout:hover {
+  color: #ffd6d6;
+  background: #ef646418;
+  border-color: #ef646440;
+}
+
+.sb-profile-logout:focus-visible {
+  outline: 2px solid #80b4ff;
+  outline-offset: 3px;
+}
+
+.sb-profile-logout svg {
+  flex-shrink: 0;
+}
+
+.sb-profile-arrow {
+  margin-left: auto;
+}
+
+/* Tampilan ringkas untuk layar pendek */
+@media (max-height: 700px) {
+  .sb-profile {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .sb-profile-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    font-size: 18px;
+  }
+
+  .sb-profile-identity {
+    gap: 10px;
+  }
+
+  .sb-profile-logout {
+    margin-top: 8px;
+    padding: 7px 10px;
+  }
+}
+
+/* Pengaturan animasi perangkat */
+@media (prefers-reduced-motion: reduce) {
+  .sb-profile-logout {
+    transition: none;
+  }
+}

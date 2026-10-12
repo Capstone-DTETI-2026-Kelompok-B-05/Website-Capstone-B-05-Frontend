@@ -1,0 +1,638 @@
+/* Login */
+.login-screen {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 36px 20px;
+  background: #17181a;
+  overflow: hidden;
+}
+
+.login-backdrop {
+  position: absolute;
+  z-index: -2;
+  inset: -28px;
+  overflow: hidden;
+}
+
+.backdrop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  transform: rotate(-7deg) scale(1.08);
+  filter: blur(5px);
+  opacity: 0.65;
+}
+
+.backdrop-tile {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  border-radius: 10px;
+  color: #ffffff95;
+  box-shadow: 0 12px 30px #0008;
+}
+
+.backdrop-tile span {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.tile-0 {
+  background: linear-gradient(150deg, #354e75, #101d36);
+}
+
+.tile-1 {
+  background: linear-gradient(150deg, #98715d, #3d3530);
+}
+
+.tile-2 {
+  background: linear-gradient(150deg, #42685e, #152f36);
+}
+
+.tile-3 {
+  background: linear-gradient(150deg, #785570, #28324f);
+}
+
+.login-screen::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: #080b11a8;
+}
+
+.login-panel {
+  width: min(430px, 100%);
+  padding: 38px 44px 28px;
+  color: white;
+  background: #101010;
+  border: 1px solid #ffffff0b;
+  border-radius: 6px;
+  box-shadow: 0 25px 80px #0009;
+  text-align: center;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+
+.login-brand img {
+  max-width: 170px;
+  max-height: 52px;
+  object-fit: contain;
+}
+
+.login-panel h1 {
+  font-size: 27px;
+  line-height: 1.25;
+  letter-spacing: -0.8px;
+  margin: 0 0 12px;
+}
+
+.login-panel > p {
+  font-size: 11px;
+  color: #a2a2a2;
+  margin: 0 0 25px;
+  line-height: 1.7;
+}
+
+.login-panel .manage-form {
+  gap: 14px;
+  text-align: left;
+}
+
+.login-panel .manage-field {
+  color: #dedede;
+  font-size: 11px;
+  gap: 6px;
+}
+
+.login-panel .manage-field input {
+  background: #1c1c1c;
+  border-color: #434343;
+  color: #fff;
+  min-height: 42px;
+  font-size: 12px;
+}
+
+.login-panel .manage-field input::placeholder {
+  color: #818181;
+}
+
+.login-panel .manage-field input:focus {
+  border-color: #68d776;
+  outline: 2px solid #68d77630;
+}
+
+.login-panel .primary-button {
+  color: #092711;
+  background: #68d776;
+  border-radius: 30px;
+  padding: 12px 24px;
+  align-self: center;
+  min-width: 120px;
+  margin-top: 6px;
+}
+
+.login-panel .primary-button:hover {
+  background: #7ce489;
+}
+
+.login-panel > small {
+  display: block;
+  color: #929292;
+  font-size: 10px;
+  margin-top: 25px;
+  line-height: 1.6;
+}
+
+.login-panel > small b {
+  color: #fff;
+  font-weight: 600;
+}
+
+.login-footer {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  color: #666;
+  margin-top: 26px;
+}
+
+/* Halaman pengelolaan */
+.management-page {
+  padding: 8px 0 24px;
+  font-size: 13px;
+}
+
+.manage-heading {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.manage-heading h1 {
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+.manage-heading p {
+  font-size: 12px;
+  color: #76849a;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.manage-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #e6eeff;
+  color: #347bf0;
+  flex-shrink: 0;
+}
+
+.manage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.manage-card {
+  padding: 24px;
+  border: 1px solid #e3eaf4;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 4px 18px #243b5c05;
+  min-width: 0;
+}
+
+.manage-card h2 {
+  font-size: 16px;
+  margin: 0 0 20px;
+}
+
+/* Formulir */
+.manage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.manage-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #53647c;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.manage-field input,
+.manage-field select {
+  width: 100%;
+  min-height: 43px;
+  border: 1px solid #dbe3ef;
+  border-radius: 7px;
+  padding: 10px 12px;
+  background: #fbfcff;
+  color: #24354f;
+  font: 400 13px Poppins, sans-serif;
+}
+
+.manage-field input:focus,
+.manage-field select:focus {
+  outline: 2px solid #c8dbff;
+  border-color: #347bf0;
+}
+
+.manage-form small {
+  color: #76849a;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.manage-note {
+  color: #76849a;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* Tombol */
+.primary-button,
+.secondary-button,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.primary-button {
+  background: #347bf0;
+  color: white;
+}
+
+.primary-button:hover {
+  background: #2566d2;
+}
+
+.secondary-button {
+  background: white;
+  border-color: #dbe3ef;
+  color: #566981;
+}
+
+.danger-button {
+  background: #dc4f51;
+  color: white;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.manage-form button:disabled,
+.record-actions button:disabled,
+.form-actions button:disabled {
+  opacity: 0.6;
+}
+
+/* Pesan formulir */
+.form-error,
+.form-success {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.form-error {
+  background: #fff0f0;
+  color: #b53e43;
+  border: 1px solid #ffd3d5;
+}
+
+.form-success {
+  background: #edf9f2;
+  color: #21875a;
+  border: 1px solid #c9ebd8;
+}
+
+.manage-form .form-error,
+.manage-form .form-success {
+  margin: 0;
+}
+
+/* Daftar data */
+.list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.list-heading h2 {
+  margin: 0;
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid #edf1f7;
+}
+
+.record-item h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.record-item h3 small {
+  font-size: 10px;
+  color: #8795a7;
+  font-weight: 400;
+}
+
+.record-item p {
+  color: #76849a;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.record-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.record-actions button {
+  border: 1px solid #dbe3ef;
+  border-radius: 6px;
+  padding: 7px 10px;
+  background: white;
+  color: #3d6fb9;
+  font-size: 11px;
+}
+
+.record-actions .danger-text {
+  color: #cb4a4a;
+}
+
+.empty-state {
+  color: #8795a7;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Label peran dan status */
+.role-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.role-badge.admin {
+  color: #6651bf;
+  background: #eee9fd;
+}
+
+.role-badge.petugas {
+  color: #21875a;
+  background: #e6f6ed;
+}
+
+.role-badge.inactive {
+  color: #8390a3;
+  background: #eef1f5;
+}
+
+/* Kamera */
+.camera-record {
+  flex-direction: column;
+}
+
+.camera-record .record-actions {
+  justify-content: flex-start;
+}
+
+.record-item .connection-ok {
+  color: #21875a;
+}
+
+.record-item .connection-failed {
+  color: #b53e43;
+}
+
+/* Password dan konfirmasi */
+.password-card {
+  max-width: 500px;
+}
+
+.confirm-card {
+  margin-top: 20px;
+}
+
+.confirm-card p {
+  color: #76849a;
+  font-size: 12px;
+}
+
+/* Sidebar tanpa scroll */
+.sidebar {
+  height: 100dvh;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-bottom: 16px;
+}
+
+.sidebar .brand {
+  padding-bottom: 14px;
+}
+
+.sidebar .nav-link {
+  height: 36px;
+  margin: 2px 0;
+}
+
+.sidebar .side-label-spaced {
+  margin-top: 14px;
+}
+
+.side-nav button.nav-link {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.side-nav button.nav-link.selected {
+  background: #3d6fe0;
+}
+
+.side-nav button.nav-link:hover {
+  background: #ffffff0e;
+}
+
+.side-nav button.nav-link.selected:hover {
+  background: #3866cf;
+}
+
+/* Akun di sidebar */
+.sidebar-account {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 8px 0;
+  padding-top: 12px;
+  border-top: 1px solid #ffffff20;
+  font-size: 11px;
+}
+
+.sidebar-account b {
+  overflow-wrap: anywhere;
+}
+
+.sidebar-account span {
+  color: #9eb0c9;
+}
+
+.sidebar-account button {
+  border: 1px solid #ffffff30;
+  background: none;
+  color: #dce6f5;
+  border-radius: 5px;
+  padding: 5px 9px;
+  font-size: 11px;
+  margin-left: auto;
+}
+
+/* Logo TransJakarta */
+.sidebar-logo {
+  position: static;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 16px;
+  pointer-events: none;
+   transform: translateY(-40px);
+}
+
+.sidebar-logo img {
+  width: 210px;
+  max-width: 100%;
+  height: auto;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.sidebar-logo img[hidden] {
+  display: none;
+}
+
+/* Banner dashboard */
+.dashboard-demo-banner {
+  margin-bottom: 15px;
+  padding: 10px 14px;
+  background: #eaf1ff;
+  border: 1px solid #d7e4fd;
+  color: #466a9c;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+/* Tampilan responsif */
+@media (max-width: 1100px) {
+  .manage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .manage-card {
+    padding: 18px;
+  }
+
+  .manage-heading h1 {
+    font-size: 20px;
+  }
+
+  .record-item {
+    flex-direction: column;
+  }
+
+  .record-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 550px) {
+  .login-panel {
+    padding: 32px 26px 24px;
+  }
+
+  .login-panel h1 {
+    font-size: 25px;
+  }
+
+  .backdrop-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .backdrop-tile {
+    min-height: 200px;
+  }
+
+  .backdrop-tile span {
+    font-size: 14px;
+  }
+}
