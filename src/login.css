@@ -40,7 +40,7 @@
   outline-offset: 3px;
 }
 
-/* Kartu utama */
+/* Card utama */
 .lg-shell {
   width: 100%;
   max-width: 1120px;
@@ -180,7 +180,7 @@
   transform: translateY(-40px);
 }
 
-/* Logo TransJakarta */
+/* Logo Capstone */
 .lg-login-brand {
   display: flex;
   align-items: center;
@@ -193,7 +193,7 @@
 
 .lg-login-logo {
   display: block;
-  width: 180px;
+  width: 360px;
   max-width: 100%;
   height: auto;
   object-fit: contain;

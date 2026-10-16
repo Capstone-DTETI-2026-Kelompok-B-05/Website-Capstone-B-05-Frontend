@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Bus, Camera, LockKeyhole, Users, LogIn, RefreshCw } from 'lucide-react';
+import AccessRequests from './AccessRequests.jsx';
 import Dashboard from './App.jsx';
 import { createApi } from './api.js';
 import Login from './login.jsx';  
@@ -26,16 +27,22 @@ export default function PortalApp() {
   if (!session) return <Login message={sessionMessage} onLogin={data => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
     setSession(data);
+    setPage(data.user.mustChangePassword ? 'password' : 'dashboard');
     setSessionMessage('');
   }}/>;
   const navigate = next => {
-    if (next === 'accounts' && session.user.role !== 'admin') return;
+    if (session.user.mustChangePassword && next !== 'password') return;
+    if (['accounts', 'requests'].includes(next) && session.user.role !== 'admin') return;
     setPage(next);
   };
-  return <Dashboard api={api} user={session.user} page={page} onNavigate={navigate} onLogout={() => logout()}>
+  return <Dashboard api={api} user={session.user} page={session.user.mustChangePassword ? 'password' : page} onNavigate={navigate} onLogout={() => logout()}>
+    {page === 'requests' && session.user.role === 'admin' && <AccessRequests api={api}/>}
     {page === 'accounts' && session.user.role === 'admin' && <Accounts api={api} user={session.user}/>}
     {page === 'cameras' && <Cameras api={api} user={session.user}/>}
-    {page === 'password' && <Password api={api}/>}
+    {(page === 'password' || session.user.mustChangePassword) && <Password api={api} required={session.user.mustChangePassword} onUpdated={() => {
+      const updated = { ...session, user: { ...session.user, mustChangePassword: false } };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated)); setSession(updated); setPage('dashboard');
+    }}/>}
   </Dashboard>;
 }
 
@@ -203,7 +210,7 @@ function Cameras({ api, user }) {
   </div>;
 }
 
-function Password({ api }) {
+function Password({ api, required = false, onUpdated = () => {} }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -214,11 +221,11 @@ function Password({ api }) {
     setError(''); setSuccess('');
     if (data.get('newPassword') !== data.get('confirmation')) { setError('Konfirmasi password belum sama.'); return; }
     setBusy(true);
-    try { await api('/auth/password', { method: 'PUT', body: { currentPassword: data.get('currentPassword'), newPassword: data.get('newPassword') } }); setSuccess('Password berhasil diganti.'); form.reset(); }
+    try { await api('/auth/password', { method: 'PUT', body: { currentPassword: data.get('currentPassword'), newPassword: data.get('newPassword') } }); setSuccess('Password berhasil diganti.'); form.reset(); if (required) onUpdated(); }
     catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
-  return <div className="management-page"><PageTitle icon={<LockKeyhole/>} title="Ganti Password" description="Perbarui password akun yang sedang kamu gunakan."/>
+  return <div className="management-page"><PageTitle icon={<LockKeyhole/>} title="Ganti Password" description={required ? 'Ganti password awal sebelum mengakses dashboard.' : 'Perbarui password akun yang sedang kamu gunakan.'}/>
     <section className="manage-card password-card"><form className="manage-form" onSubmit={submit}>
       <Field label="Password saat ini"><input name="currentPassword" type="password" autoComplete="current-password" required disabled={busy}/></Field>
       <Field label="Password baru"><input name="newPassword" type="password" autoComplete="new-password" required minLength={8} pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" disabled={busy}/></Field>

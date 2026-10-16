@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, BarChart3, Bus, Camera, Check, Clock3, DoorOpen,
-  ChevronDown, Gauge, Home, LogOut, Settings, ShieldAlert, ShieldCheck, SlidersHorizontal, Wifi, X,
+  UserPlus, ChevronDown, Gauge, Home, LogOut, Settings, ShieldAlert, ShieldCheck, SlidersHorizontal, Wifi, X,
 } from 'lucide-react'
 import './dash.css'
-import './profile.css' 
+import './profile.css'
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace(/\/+$/, '')
 const VIDEO_URL = import.meta.env.VITE_VIDEO_FEED_URL
@@ -23,6 +23,7 @@ const ITEMS = [
   { id: 'logs', label: 'Log Kendaraan', Icon: ShieldAlert, to: 'dashboard', notice: 'Log kendaraan tersedia di bagian bawah dashboard.' },
   { id: 'analytics', label: 'Analytics', Icon: BarChart3, to: 'dashboard', notice: 'Ringkasan kendaraan tersedia di bagian bawah dashboard.' },
   { id: 'system', label: 'System Control', Icon: SlidersHorizontal, to: 'dashboard', notice: 'Gunakan panel Portal Control pada dashboard.' },
+  { id: 'requests', label: 'Permintaan Akun', Icon: UserPlus, admin: true },
   { id: 'accounts', label: 'Kelola Akun', Icon: ShieldCheck, admin: true },
   { id: 'password', label: 'Ganti Password', Icon: Settings },
 ]
@@ -121,6 +122,7 @@ export default function App({ api, user, page = 'dashboard', onNavigate = () => 
   const videoSrc = VIDEO_URL || (frame ? `data:${frame.mime};base64,${frame.data}` : null)
   useEffect(() => {
     let cancelled = false, timer
+    if (user?.mustChangePassword) return
     async function poll() {
       try {
         const data = await api('/dashboard')
@@ -131,7 +133,7 @@ export default function App({ api, user, page = 'dashboard', onNavigate = () => 
     }
     poll()
     return () => { cancelled = true; clearTimeout(timer) }
-  }, [api])
+  }, [api, user?.mustChangePassword])
   useEffect(() => {
     let cancelled = false, timer
     setFrame(null)
@@ -224,7 +226,7 @@ export default function App({ api, user, page = 'dashboard', onNavigate = () => 
         {/* top bar */}
         <header className="sl-top">
           <div className="sl-pill sl-brand">
-            <span className="sl-brand-ic"><Bus size={18} /></span>Smart Busway Portal
+            <span className="sl-brand-ic"><Bus size={18} /></span>Smart Portal Busway
           </div>
           <nav aria-label="Navigasi utama" className="sl-pill sl-nav">
             {ITEMS.slice(0, 4).map((i) => (
@@ -397,11 +399,11 @@ export default function App({ api, user, page = 'dashboard', onNavigate = () => 
                 </div>
 
                 <div className="sl-foot">
-                  <span>TransJakarta • Smart Lane</span>
+                  <span>Busway • Smart Portal</span>
                   <span><ShieldCheck size={12} />{monitorError ? 'Koneksi terputus' : 'Monitoring backend'}</span>
                 </div>
-                <div className="sl-tj">
-                  <img src="/logo-tj.png" alt="Logo TransJakarta" onError={(e) => { e.currentTarget.parentElement.hidden = true }} />
+                <div className="sl-logo-capstone">
+                  <img src="/logo-capstone.png" alt="Logo Capstone" />
                 </div>
               </>
             )}

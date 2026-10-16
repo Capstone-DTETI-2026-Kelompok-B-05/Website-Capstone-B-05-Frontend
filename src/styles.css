@@ -49,7 +49,7 @@ button { cursor: pointer; }
 .art-building.a1 { left: 5px; height: 68px; }.art-building.a2 { right: 5px; height: 96px; width: 36px; }
 .art-bus { position: absolute; right: 30%; bottom: 17px; display: grid; width: 32px; height: 48px; place-items: center; color: #aebdd2; border-radius: 5px; background: #3d536f; }
 .brand-footer { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; margin-top: auto; padding: 10px 5px 0; border-top: 1px solid #ffffff20; color: #e2e9f3; font-size: 27px; }
-.tj-mark { display: grid; width: 20px; height: 20px; place-items: center; border: 1px solid #d7e2f0; border-radius: 50%; }
+.logo-capstone { display: grid; width: 20px; height: 20px; place-items: center; border: 1px solid #d7e2f0; border-radius: 50%; }
 
 .main-content { min-height: 100vh; margin-left: 260px; }
 .topbar { position: sticky; top: 0; z-index: 3; display: flex; height: 44px; align-items: center; justify-content: space-between; padding: 0 19px; border-bottom: 1px solid #e8edf4; background: #fff; }

@@ -7,6 +7,7 @@ import {
   LogIn,
 } from 'lucide-react';
 
+import AccessRequestForm from './AccessRequestForm.jsx';
 import { createApi } from './api.js';
 import './login.css';
 
@@ -31,6 +32,7 @@ const SLIDES = [
 ];
 
 export default function Login({ onLogin, message = '' }) {
+  const [requestAccess, setRequestAccess] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
@@ -143,19 +145,22 @@ export default function Login({ onLogin, message = '' }) {
               ) : (
                 <img
                   className="lg-login-logo"
-                  src="/logo-tj.png"
-                  alt="TransJakarta"
+                  src="/logo-capstone.png"
+                  alt="Capstone"
                   onError={() => setLogoFailed(true)}
                 />
               )}
             </div>
 
+            {!requestAccess && <>
             <h1>Selamat Datang</h1>
 
             <p className="lg-sub">
               Masuk menggunakan akun admin atau petugas kamu.
             </p>
+            </>}
 
+            {requestAccess ? <AccessRequestForm onBack={() => setRequestAccess(false)}/> : <>
             <form
               className="lg-form"
               onSubmit={handleSubmit}
@@ -230,8 +235,10 @@ export default function Login({ onLogin, message = '' }) {
             </form>
 
             <p className="lg-help">
-              Belum punya akun? <b>Hubungi admin.</b>
+              Belum punya akun? <button type="button" className="access-link" disabled={busy} onClick={() => setRequestAccess(true)}>Ajukan akses</button>
             </p>
+
+            </>}
 
             <div className="lg-divider" />
 

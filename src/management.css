@@ -554,7 +554,7 @@ button:disabled {
   margin-left: auto;
 }
 
-/* Logo TransJakarta */
+/* Logo Capstone */
 .sidebar-logo {
   position: static;
   display: flex;
@@ -567,7 +567,7 @@ button:disabled {
 }
 
 .sidebar-logo img {
-  width: 210px;
+  width: 280px; 
   max-width: 100%;
   height: auto;
   max-height: 180px;
