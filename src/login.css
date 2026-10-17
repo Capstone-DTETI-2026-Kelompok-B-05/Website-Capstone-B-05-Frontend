@@ -40,7 +40,7 @@
   outline-offset: 3px;
 }
 
-/* Card utama */
+/* Kartu utama */
 .lg-shell {
   width: 100%;
   max-width: 1120px;
@@ -192,11 +192,9 @@
 }
 
 .lg-login-logo {
-  display: block;
   width: 360px;
   max-width: 100%;
   height: auto;
-  object-fit: contain;
 }
 
 /* Judul login */
@@ -447,4 +445,7 @@
   .lg-slide {
     transition: none;
   }
-}
+}.lg-contact { border: 0; background: none; color: inherit; padding: 0; font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.access-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #10203b99; backdrop-filter: blur(5px); padding: 20px; }
+.access-dialog { width: min(100%, 460px); max-height: 90dvh; overflow: auto; background: white; color: #12203a; padding: 28px; border-radius: 24px; box-shadow: 0 20px 80px #07132640; }
+.access-dialog h2 { margin: 0 0 8px; }.access-dialog p { font-size: 13px; margin: 0 0 20px; color: #6b7a92; }.access-dialog textarea { min-height: 90px; resize: vertical; font: inherit; border: 1px solid #dce4ee; padding: 10px; border-radius: 10px; }

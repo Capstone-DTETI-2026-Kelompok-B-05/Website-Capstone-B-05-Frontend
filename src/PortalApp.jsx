@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Bus, Camera, LockKeyhole, Users, LogIn, RefreshCw } from 'lucide-react';
-import AccessRequests from './AccessRequests.jsx';
 import Dashboard from './App.jsx';
 import { createApi } from './api.js';
-import Login from './login.jsx';  
+import Login from './login.jsx';
+import { canNavigate } from './access.js';  
 
 const SESSION_KEY = 'smart-busway-session';
 function readSession() {
@@ -27,22 +27,16 @@ export default function PortalApp() {
   if (!session) return <Login message={sessionMessage} onLogin={data => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
     setSession(data);
-    setPage(data.user.mustChangePassword ? 'password' : 'dashboard');
     setSessionMessage('');
   }}/>;
   const navigate = next => {
-    if (session.user.mustChangePassword && next !== 'password') return;
-    if (['accounts', 'requests'].includes(next) && session.user.role !== 'admin') return;
+    if (!canNavigate(session.user.role, next)) return;
     setPage(next);
   };
-  return <Dashboard api={api} user={session.user} page={session.user.mustChangePassword ? 'password' : page} onNavigate={navigate} onLogout={() => logout()}>
-    {page === 'requests' && session.user.role === 'admin' && <AccessRequests api={api}/>}
-    {page === 'accounts' && session.user.role === 'admin' && <Accounts api={api} user={session.user}/>}
-    {page === 'cameras' && <Cameras api={api} user={session.user}/>}
-    {(page === 'password' || session.user.mustChangePassword) && <Password api={api} required={session.user.mustChangePassword} onUpdated={() => {
-      const updated = { ...session, user: { ...session.user, mustChangePassword: false } };
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated)); setSession(updated); setPage('dashboard');
-    }}/>}
+  return <Dashboard api={api} token={session.token} user={session.user} page={canNavigate(session.user.role, page) ? page : 'dashboard'} onNavigate={navigate} onLogout={() => logout()}>
+    {page === 'accounts' && session.user.role === 'admin' && <><Accounts api={api} user={session.user}/><AccessRequests api={api}/></>}
+    {page === 'cameras' && session.user.role === 'admin' && <Cameras api={api} user={session.user}/>}
+    {page === 'password' && session.user.role === 'admin' && <Password api={api}/>}
   </Dashboard>;
 }
 
@@ -200,7 +194,7 @@ function Cameras({ api, user }) {
         {editing && <button className="secondary-button" type="button" disabled={busy} onClick={() => setEditing(null)}>Batal edit</button>}
       </form></section>
     </div>
-    <p className="manage-note">Cek koneksi memeriksa port kamera. Dashboard menerima frame JPEG/PNG melalui MQTT. RTSP perlu dikonversi oleh worker kamera menjadi frame atau HTTP MJPEG.</p>
+    <p className="manage-note">Cek koneksi memeriksa port kamera. Live stream dan kontrol portal tersedia di Dashboard.</p>
     {deleting && <section className="manage-card confirm-card"><h2>Hapus kamera {deleting.name}?</h2><p>Data kamera ini akan dihapus dari database.</p><div className="form-actions"><button className="danger-button" disabled={busy} onClick={async () => {
       setBusy(true); setError(''); setSuccess('');
       try { await api(`/cameras/${deleting.id}`, { method: 'DELETE' }); if (editing?.id === deleting.id) setEditing(null); setDeleting(null); setSuccess('Kamera berhasil dihapus.'); await records.reload(); }
@@ -210,7 +204,7 @@ function Cameras({ api, user }) {
   </div>;
 }
 
-function Password({ api, required = false, onUpdated = () => {} }) {
+function Password({ api }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -221,11 +215,11 @@ function Password({ api, required = false, onUpdated = () => {} }) {
     setError(''); setSuccess('');
     if (data.get('newPassword') !== data.get('confirmation')) { setError('Konfirmasi password belum sama.'); return; }
     setBusy(true);
-    try { await api('/auth/password', { method: 'PUT', body: { currentPassword: data.get('currentPassword'), newPassword: data.get('newPassword') } }); setSuccess('Password berhasil diganti.'); form.reset(); if (required) onUpdated(); }
+    try { await api('/auth/password', { method: 'PUT', body: { currentPassword: data.get('currentPassword'), newPassword: data.get('newPassword') } }); setSuccess('Password berhasil diganti.'); form.reset(); }
     catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
-  return <div className="management-page"><PageTitle icon={<LockKeyhole/>} title="Ganti Password" description={required ? 'Ganti password awal sebelum mengakses dashboard.' : 'Perbarui password akun yang sedang kamu gunakan.'}/>
+  return <div className="management-page"><PageTitle icon={<LockKeyhole/>} title="Ganti Password" description="Perbarui password akun yang sedang kamu gunakan."/>
     <section className="manage-card password-card"><form className="manage-form" onSubmit={submit}>
       <Field label="Password saat ini"><input name="currentPassword" type="password" autoComplete="current-password" required disabled={busy}/></Field>
       <Field label="Password baru"><input name="newPassword" type="password" autoComplete="new-password" required minLength={8} pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" disabled={busy}/></Field>
@@ -233,4 +227,28 @@ function Password({ api, required = false, onUpdated = () => {} }) {
       <small>Minimal 8 karakter, mengandung huruf dan angka.</small>
       <Feedback error={error} success={success}/><button className="primary-button" disabled={busy}>{busy ? 'Menyimpan…' : 'Ganti password'}</button>
     </form></section></div>;
+}
+
+function AccessRequests({ api }) {
+  const records = useRecords(api, '/access-requests', 'requests');
+  const [selected, setSelected] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  return <section className="manage-card" style={{ marginTop: 20 }}><h2>Permintaan Akses Petugas</h2><Feedback error={error} success={success}/>
+    <RecordList title="Daftar pengajuan" records={records}><div className="record-list">{records.rows.map(row => <div className="record-item" key={row.id}><div><h3>{row.name}</h3><p>{row.email}</p><p>{row.reason}</p><span className="role-badge">{row.status}</span></div>{['pending', 'processing'].includes(row.status) && <button className="secondary-button" disabled={busy} onClick={() => setSelected(row)}>Tinjau</button>}</div>)}</div></RecordList>
+    {selected && <form className="manage-form" onSubmit={async e => {
+      e.preventDefault(); const values = new FormData(e.currentTarget); setBusy(true); setError(''); setSuccess('');
+      try {
+        const reject = e.nativeEvent.submitter?.value === 'reject';
+        await api(`/access-requests/${selected.id}/${reject ? 'reject' : 'approve'}`, { method: 'POST', body: reject ? { rejectionReason: values.get('rejectionReason') } : { username: values.get('username'), password: values.get('password') } });
+        setSuccess(reject ? 'Permintaan ditolak.' : 'Akun berhasil dibuat. Sampaikan username dan password awal secara pribadi kepada pemohon.'); setSelected(null); await records.reload();
+      } catch (err) { setError(err.message); } finally { setBusy(false); }
+    }}><h3>Tinjau: {selected.name}</h3>
+      <Field label="Username untuk akun baru"><input name="username" minLength={3} maxLength={50} disabled={busy}/></Field>
+      <Field label="Password awal"><input name="password" type="password" minLength={8} pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}" autoComplete="new-password" disabled={busy}/></Field>
+      <Field label="Alasan penolakan (opsional)"><input name="rejectionReason" maxLength={500} disabled={busy}/></Field>
+      <div className="form-actions"><button className="primary-button" name="action" value="approve" disabled={busy}>Setujui & Buat Akun</button><button className="danger-button" name="action" value="reject" disabled={busy}>Tolak</button><button className="secondary-button" type="button" disabled={busy} onClick={() => setSelected(null)}>Batal</button></div>
+    </form>}
+  </section>;
 }

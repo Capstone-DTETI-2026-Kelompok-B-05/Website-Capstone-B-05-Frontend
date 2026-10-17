@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
+/* Semua gaya berada di dalam .dash dan memakai awalan "sl-", jadi tidak bentrok
+   dengan styles.css, management.css, maupun login.css. */
+
 .dash {
   --page: #E9EEF6; --shell: #F5F7FB; --soft: #F1F4F9; --line: #E8EDF4;
   --ink: #12203A; --ink5: #6B7A92; --ink4: #8995A8;
@@ -170,9 +173,8 @@
 .dash .sl-si small { display: block; font-size: 11px; color: var(--ink4); }
 .dash .sl-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 4px 0; font-size: 11px; color: var(--ink4); }
 .dash .sl-foot span:last-child { display: flex; align-items: center; gap: 4px; color: var(--b600); }
-/* Logo Capstone */
 .dash .sl-logo-capstone { display: flex; justify-content: center; align-items: center; width: 100%; max-width: 100%; margin-top: 24px; }
-.dash .sl-logo-capstone img { display: block; width: 720px; max-width: 95%; height: auto; object-fit: contain; }
+.dash .sl-logo-capstone img { display: block; width: 540px; max-width: 95%; height: auto; object-fit: contain; }
 
 /* toast */
 .dash .sl-toast { position: fixed; right: 20px; bottom: 20px; z-index: 20; display: flex; align-items: center; gap: 10px; max-width: 340px; padding: 12px 16px; border-radius: 16px; background: var(--ink); color: #fff; box-shadow: 0 12px 32px #12203a2e; transform: translateY(20px); opacity: 0; pointer-events: none; transition: .25s; }
@@ -181,7 +183,7 @@
 
 @keyframes sl-pulse { 50% { opacity: .35; } }
 
-
+/* ---------- responsif ---------- */
 @media (max-width: 1180px) {
   .dash .sl-grid-m { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dash .sl-grid-a, .dash .sl-grid-b { grid-template-columns: 1fr 1fr; }
@@ -205,14 +207,3 @@
 @media (prefers-reduced-motion: reduce) {
   .dash * { animation: none !important; transition: none !important; }
 }
-/* Profil di kanan atas */
-.dash .sl-account { position: relative; flex-shrink: 0; z-index: 80; }
-.dash .sl-account .sl-me { text-align: left; transition: box-shadow .18s ease; }
-.dash .sl-account .sl-me:hover,
-.dash .sl-account .sl-me[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--b100), var(--shadow); }
-.dash .sl-account-chevron { color: var(--ink5); transition: transform .18s ease; }
-.dash .sl-account-chevron.open { transform: rotate(180deg); }
-.dash .sl-account-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 190px; padding: 6px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 10px 30px #12203a18; }
-.dash .sl-account-logout { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; border-radius: 11px; color: #dc2626; font-weight: 600; text-align: left; }
-.dash .sl-account-logout:hover { background: #fef2f2; color: #b91c1c; }
-.dash .sl-account-logout:focus-visible { outline-color: #fca5a5; background: #fef2f2; }

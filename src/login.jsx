@@ -7,9 +7,9 @@ import {
   LogIn,
 } from 'lucide-react';
 
-import AccessRequestForm from './AccessRequestForm.jsx';
 import { createApi } from './api.js';
 import './login.css';
+import AccessRequest from './AccessRequest.jsx';
 
 const SLIDE_INTERVAL = 5000;
 
@@ -32,12 +32,12 @@ const SLIDES = [
 ];
 
 export default function Login({ onLogin, message = '' }) {
-  const [requestAccess, setRequestAccess] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const slide = SLIDES[activeSlide];
   const feedback = error || message;
@@ -92,6 +92,7 @@ export default function Login({ onLogin, message = '' }) {
 
   return (
     <main className="lg-screen">
+      {requestOpen && <AccessRequest onClose={() => setRequestOpen(false)}/>}
       <section className="lg-shell" aria-label="Login Smart Busway">
         <section
           className="lg-gallery"
@@ -152,15 +153,12 @@ export default function Login({ onLogin, message = '' }) {
               )}
             </div>
 
-            {!requestAccess && <>
             <h1>Selamat Datang</h1>
 
             <p className="lg-sub">
               Masuk menggunakan akun admin atau petugas kamu.
             </p>
-            </>}
 
-            {requestAccess ? <AccessRequestForm onBack={() => setRequestAccess(false)}/> : <>
             <form
               className="lg-form"
               onSubmit={handleSubmit}
@@ -235,10 +233,8 @@ export default function Login({ onLogin, message = '' }) {
             </form>
 
             <p className="lg-help">
-              Belum punya akun? <button type="button" className="access-link" disabled={busy} onClick={() => setRequestAccess(true)}>Ajukan akses</button>
+              Belum punya akun? <button type="button" className="lg-contact" onClick={() => setRequestOpen(true)}>Hubungi admin</button>
             </p>
-
-            </>}
 
             <div className="lg-divider" />
 

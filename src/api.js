@@ -11,7 +11,7 @@ export function createApi(token, onExpired = () => {}, fetcher = fetch) {
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-        signal: AbortSignal.timeout(12000)
+        signal: AbortSignal.timeout(25000)
       });
     } catch {
       throw new Error('Backend tidak dapat dijangkau. Periksa server dan konfigurasi API.');
