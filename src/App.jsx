@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Activity, AlertCircle, BarChart3, Bus, Camera, Check, ChevronDown,
-  Clock3, DoorOpen, Gauge, LogOut, RefreshCw, Settings,
-  ShieldCheck, Wifi, X,
+  Clock3, DoorOpen, LogOut, RefreshCw, Settings, ShieldCheck, Wifi, X,
 } from 'lucide-react';
 import LiveFeed from './LiveFeed.jsx';
 import { vehicleLabel } from './access.js';
@@ -79,18 +78,26 @@ export default function App({
       if (results[3].status === 'fulfilled') setStats(results[3].value);
 
       const labels = ['Koneksi', 'Kamera', 'Riwayat', 'Statistik'];
-      setErrors(results.flatMap((r, i) =>
-        r.status === 'rejected' ? [`${labels[i]}: ${r.reason.message}`] : []
+
+      setErrors(results.flatMap((result, index) =>
+        result.status === 'rejected'
+          ? [`${labels[index]}: ${result.reason.message}`]
+          : []
       ));
 
-      if (results.every(r => r.status === 'fulfilled')) setUpdated(new Date());
+      if (results.every(result => result.status === 'fulfilled')) {
+        setUpdated(new Date());
+      }
 
       setLoading(false);
       timer = setTimeout(poll, 5000);
     }
 
     poll();
-    return () => { stopped = true; clearTimeout(timer); };
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
   }, [api, refresh]);
 
   useEffect(() => {
@@ -99,12 +106,12 @@ export default function App({
   }, []);
 
   useEffect(() => {
-    const outside = e => {
-      if (!profile.current?.contains(e.target)) setMenu(false);
+    const outside = event => {
+      if (!profile.current?.contains(event.target)) setMenu(false);
     };
 
-    const keyboard = e => {
-      if (e.key === 'Escape' && profile.current?.contains(e.target)) {
+    const keyboard = event => {
+      if (event.key === 'Escape' && profile.current?.contains(event.target)) {
         setMenu(false);
         profileButton.current?.focus();
       }
@@ -151,7 +158,7 @@ export default function App({
   const rows = stats?.byVehicleType || [];
   const total = stats?.summary?.totalDetections || 0;
   const count = type => rows.find(row => row._id === type)?.count || 0;
-  const selected = cameras.find(c => c.id === cameraId);
+  const selected = cameras.find(camera => camera.id === cameraId);
   const maxCount = Math.max(1, ...rows.map(row => row.count));
   const hour = now.getHours();
 
@@ -167,10 +174,10 @@ export default function App({
     : stream === 'connecting' ? 'Menghubungkan' : 'Belum terhubung';
 
   let offset = 0;
-  const gradient = rows.map((row, i) => {
+  const gradient = rows.map((row, index) => {
     const start = offset;
     offset += total ? row.count / total * 100 : 0;
-    return `${COLORS[i % COLORS.length]} ${start}% ${offset}%`;
+    return `${COLORS[index % COLORS.length]} ${start}% ${offset}%`;
   }).join(',');
 
   const metrics = [
@@ -217,9 +224,9 @@ export default function App({
                 <button
                   key={id}
                   type="button"
-                  onClick={() => onNavigate(id)}
                   className={page === id ? 'on' : ''}
                   aria-current={page === id ? 'page' : undefined}
+                  onClick={() => onNavigate(id)}
                 >
                   {title}
                 </button>
@@ -235,7 +242,7 @@ export default function App({
                 type="button"
                 className="sl-icbtn"
                 aria-label="Refresh data"
-                onClick={() => setRefresh(n => n + 1)}
+                onClick={() => setRefresh(value => value + 1)}
               >
                 <RefreshCw size={15} />
               </button>
@@ -248,7 +255,7 @@ export default function App({
                 className={`sl-pill sl-me ${menu ? 'is-open' : ''}`}
                 aria-expanded={menu}
                 aria-controls="account-dropdown"
-                onClick={() => setMenu(v => !v)}
+                onClick={() => setMenu(value => !value)}
               >
                 <span className="sl-av">{username[0].toUpperCase()}</span>
                 <span className="sl-me-t">
@@ -315,15 +322,15 @@ export default function App({
                 )}
 
                 <div className="sl-grid-m" aria-busy={loading}>
-                  {metrics.map(([title, value, Icon], i) => (
-                    <div key={title} className={`sl-card sl-metric ${i === 0 ? 'hero' : ''}`}>
+                  {metrics.map(([title, value, Icon], index) => (
+                    <div key={title} className={`sl-card sl-metric ${index === 0 ? 'hero' : ''}`}>
                       <div className="sl-metric-top">
                         {title}<span className="sl-chip"><Icon size={18} /></span>
                       </div>
                       <div className="sl-metric-val">
                         {stats ? value.toLocaleString('id-ID') : '—'}
                       </div>
-                      <small>Seluruh riwayat sistem</small>
+                      <small>Akumulasi deteksi</small>
                     </div>
                   ))}
                 </div>
@@ -341,11 +348,13 @@ export default function App({
                       <select
                         aria-label="Pilih kamera monitoring"
                         value={cameraId}
-                        onChange={e => setCameraId(e.target.value)}
+                        onChange={event => setCameraId(event.target.value)}
                         disabled={!cameras.length}
                       >
                         <option value="" disabled>Belum ada kamera aktif</option>
-                        {cameras.map(c => <option value={c.id} key={c.id}>{c.name}</option>)}
+                        {cameras.map(camera => (
+                          <option value={camera.id} key={camera.id}>{camera.name}</option>
+                        ))}
                       </select>
                     </label>
 
@@ -361,18 +370,17 @@ export default function App({
                         ['Kamera', selected?.name || '—'],
                         ['Stream', stream === 'live' ? 'Terhubung' : 'Menunggu'],
                         ['Sumber', 'Frame kamera'],
-                        ['Deteksi', 'Riwayat global'],
                       ].map(([label, value]) => (
-                        <div className="sl-fs" key={label}><small>{label}</small><b>{value}</b></div>
+                        <div className="sl-fs" key={label}>
+                          <small>{label}</small><b>{value}</b>
+                        </div>
                       ))}
                     </div>
                   </section>
 
                   <section className="sl-card">
                     <Head Icon={Activity} title="Deteksi Terakhir" />
-                    <p className="sl-muted">
-                      Riwayat seluruh kamera · {dateTime(current?.detectedAt)}
-                    </p>
+                    <p className="sl-muted">{dateTime(current?.detectedAt)}</p>
 
                     {details.map(([label, value]) => (
                       <div className="sl-kv" key={label}><span>{label}</span><b>{value}</b></div>
@@ -468,13 +476,13 @@ export default function App({
                         </tbody>
                       </table>
                     </div>
-                    <p className="sl-muted">100 deteksi terbaru · seluruh kamera</p>
+                    <p className="sl-muted">100 deteksi terbaru</p>
                   </section>
 
                   <section className="sl-card">
                     <Head Icon={BarChart3} title="Jumlah Kendaraan" />
                     <div className="sl-bars">
-                      {rows.map((row, i) => (
+                      {rows.map((row, index) => (
                         <div key={row._id}>
                           <div className="sl-bar-label">
                             <span>{vehicleLabel(row._id)}</span><b>{row.count}</b>
@@ -482,14 +490,14 @@ export default function App({
                           <div className="sl-bar-track">
                             <div style={{
                               width: `${row.count / maxCount * 100}%`,
-                              background: COLORS[i % COLORS.length],
+                              background: COLORS[index % COLORS.length],
                             }} />
                           </div>
                         </div>
                       ))}
                     </div>
                     {!rows.length && <p className="empty-state">Belum ada statistik.</p>}
-                    <p className="sl-muted">Akumulasi seluruh riwayat sistem.</p>
+                    <p className="sl-muted">Akumulasi deteksi kendaraan.</p>
                   </section>
 
                   <section className="sl-card">
@@ -503,9 +511,9 @@ export default function App({
                       </div>
 
                       <div className="sl-dl">
-                        {rows.map((row, i) => (
+                        {rows.map((row, index) => (
                           <span key={row._id} className="sl-dl-i">
-                            <i style={{ background: COLORS[i % COLORS.length] }} />
+                            <i style={{ background: COLORS[index % COLORS.length] }} />
                             {vehicleLabel(row._id)}
                             <b>{total ? (row.count / total * 100).toFixed(0) : 0}%</b>
                           </span>
