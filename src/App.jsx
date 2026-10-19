@@ -10,7 +10,11 @@ import './profile.css';
 import './smooth.css';
 
 const COLORS = ['#347BF0', '#5B93F5', '#8BB2FA', '#BCD3FF', '#233c60', '#91a1b7'];
-const dateTime = value => value ? new Date(value).toLocaleString('id-ID') : '—';
+const TIME_ZONE = 'Asia/Jakarta';
+const dayKey = date => date.toLocaleDateString('sv-SE', { timeZone: TIME_ZONE });
+const dateTime = value => value
+  ? new Date(value).toLocaleString('id-ID', { timeZone: TIME_ZONE })
+  : '—';
 const percent = value => `${((value || 0) * 100).toFixed(1)}%`;
 
 function Head({ Icon, title, children }) {
@@ -57,11 +61,17 @@ export default function App({
     let stopped = false, timer;
 
     async function poll() {
+      const today = dayKey(new Date());
+      const query = new URLSearchParams({
+        from: `${today}T00:00:00.000+07:00`,
+        to: `${today}T23:59:59.999+07:00`,
+      });
+
       const results = await Promise.allSettled([
         api('/health'),
         api('/cameras'),
         api('/analytics/history?limit=100'),
-        api('/analytics/statistics'),
+        api(`/analytics/statistics?${query}`),
       ]);
 
       if (stopped) return;
@@ -69,13 +79,18 @@ export default function App({
       setHealth(results[0].status === 'fulfilled' ? 'online' : 'offline');
 
       if (results[1].status === 'fulfilled') {
-        const active = results[1].value.cameras.filter(c => c.isActive);
+        const active = results[1].value.cameras.filter(camera => camera.isActive);
         setCameras(active);
-        setCameraId(id => active.some(c => c.id === id) ? id : active[0]?.id || '');
+        setCameraId(id => active.some(camera => camera.id === id) ? id : active[0]?.id || '');
       }
 
-      if (results[2].status === 'fulfilled') setEvents(results[2].value.events);
-      if (results[3].status === 'fulfilled') setStats(results[3].value);
+      if (results[2].status === 'fulfilled') {
+        setEvents(results[2].value.events);
+      }
+
+      if (results[3].status === 'fulfilled') {
+        setStats({ ...results[3].value, day: today });
+      }
 
       const labels = ['Koneksi', 'Kamera', 'Riwayat', 'Statistik'];
 
@@ -94,6 +109,7 @@ export default function App({
     }
 
     poll();
+
     return () => {
       stopped = true;
       clearTimeout(timer);
@@ -154,13 +170,16 @@ export default function App({
     }
   }
 
+  const dailyStats = stats?.day === dayKey(now) ? stats : null;
   const current = events[0];
-  const rows = stats?.byVehicleType || [];
-  const total = stats?.summary?.totalDetections || 0;
+  const rows = dailyStats?.byVehicleType || [];
+  const total = dailyStats?.summary?.totalDetections || 0;
   const count = type => rows.find(row => row._id === type)?.count || 0;
   const selected = cameras.find(camera => camera.id === cameraId);
   const maxCount = Math.max(1, ...rows.map(row => row.count));
-  const hour = now.getHours();
+  const hour = Number(now.toLocaleTimeString('en-GB', {
+    timeZone: TIME_ZONE, hour: '2-digit', hourCycle: 'h23',
+  }));
 
   const greeting = hour < 4 ? 'malam'
     : hour < 11 ? 'pagi'
@@ -299,9 +318,11 @@ export default function App({
                 <h1 className="sl-h1">Selamat {greeting}, {username}</h1>
                 <p className="sl-sub">
                   {now.toLocaleDateString('id-ID', {
+                    timeZone: TIME_ZONE,
                     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
                   })}
-                  {' · '}{now.toLocaleTimeString('id-ID')}
+                  {' · '}
+                  {now.toLocaleTimeString('id-ID', { timeZone: TIME_ZONE })} WIB
                 </p>
 
                 {errors.length > 0 && (
@@ -309,7 +330,13 @@ export default function App({
                     <AlertCircle size={18} />
                     <span>
                       {errors.join(' · ')}
-                      {updated && <small>Data terakhir: {updated.toLocaleTimeString('id-ID')}</small>}
+                      {updated && (
+                        <small>
+                          Data terakhir: {updated.toLocaleTimeString('id-ID', {
+                            timeZone: TIME_ZONE,
+                          })} WIB
+                        </small>
+                      )}
                     </span>
                   </div>
                 )}
@@ -321,16 +348,16 @@ export default function App({
                   </div>
                 )}
 
-                <div className="sl-grid-m" aria-busy={loading}>
+                <div className="sl-grid-m" aria-busy={loading || !dailyStats}>
                   {metrics.map(([title, value, Icon], index) => (
                     <div key={title} className={`sl-card sl-metric ${index === 0 ? 'hero' : ''}`}>
                       <div className="sl-metric-top">
                         {title}<span className="sl-chip"><Icon size={18} /></span>
                       </div>
                       <div className="sl-metric-val">
-                        {stats ? value.toLocaleString('id-ID') : '—'}
+                        {dailyStats ? value.toLocaleString('id-ID') : '—'}
                       </div>
-                      <small>Akumulasi deteksi</small>
+                      <small>Deteksi hari ini · WIB</small>
                     </div>
                   ))}
                 </div>
@@ -480,7 +507,7 @@ export default function App({
                   </section>
 
                   <section className="sl-card">
-                    <Head Icon={BarChart3} title="Jumlah Kendaraan" />
+                    <Head Icon={BarChart3} title="Jumlah Kendaraan Hari Ini" />
                     <div className="sl-bars">
                       {rows.map((row, index) => (
                         <div key={row._id}>
@@ -496,18 +523,26 @@ export default function App({
                         </div>
                       ))}
                     </div>
-                    {!rows.length && <p className="empty-state">Belum ada statistik.</p>}
-                    <p className="sl-muted">Akumulasi deteksi kendaraan.</p>
+
+                    {!rows.length && (
+                      <p className="empty-state">
+                        {dailyStats ? 'Belum ada deteksi hari ini.' : 'Statistik hari ini belum tersedia.'}
+                      </p>
+                    )}
+
+                    <p className="sl-muted">Rekap hari ini · 00.00–23.59 WIB</p>
                   </section>
 
                   <section className="sl-card">
-                    <Head Icon={Activity} title="Distribusi Kendaraan" />
+                    <Head Icon={Activity} title="Distribusi Kendaraan Hari Ini" />
                     <div className="sl-dn">
                       <div
                         className="sl-donut"
                         style={{ background: total ? `conic-gradient(${gradient})` : '#EEF4FF' }}
                       >
-                        <div className="sl-donut-c"><b>{stats ? total : '—'}</b>Deteksi</div>
+                        <div className="sl-donut-c">
+                          <b>{dailyStats ? total : '—'}</b>Deteksi
+                        </div>
                       </div>
 
                       <div className="sl-dl">
@@ -524,8 +559,12 @@ export default function App({
                     <div className="sl-peak">
                       <Check size={18} />
                       <div>
-                        <small>Rata-rata Confidence</small>
-                        <b>{stats ? percent(stats.summary?.averageConfidence) : '—'}</b>
+                        <small>Rata-rata Confidence Hari Ini</small>
+                        <b>
+                          {dailyStats && total > 0
+                            ? percent(dailyStats.summary?.averageConfidence)
+                            : '—'}
+                        </b>
                       </div>
                     </div>
                   </section>
