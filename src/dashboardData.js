@@ -108,7 +108,6 @@ export function timeAgo(value, now = new Date()) {
   return `${Math.floor(seconds / 86400)} hari lalu`;
 }
 
-// Backend tidak punya endpoint status portal; status terakhir tercatat di setiap DetectionEvent.
 export function portalFromEvent(event) {
   if (!event) return null;
   return { open: Boolean(event.portalOpen), mode: event.portalMode === 'manual' ? 'MANUAL' : 'AUTO' };

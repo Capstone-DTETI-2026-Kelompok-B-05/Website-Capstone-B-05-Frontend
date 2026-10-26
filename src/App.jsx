@@ -11,6 +11,20 @@ import './smooth.css';
 
 const COLORS = ['#347BF0', '#5B93F5', '#8BB2FA', '#BCD3FF', '#233c60', '#91a1b7'];
 const TIME_ZONE = 'Asia/Jakarta';
+const SYSTEM_STATUS_PATH = (import.meta.env.VITE_SYSTEM_STATUS_PATH || '').trim();
+
+function normalizeSystemStatus(response) {
+  const data = response?.data ?? response;
+  if (!data || typeof data !== 'object') return null;
+  const esp32Connected = typeof data.esp32Connected === 'boolean' ? data.esp32Connected : null;
+  const fps = typeof data.fps === 'number' && Number.isFinite(data.fps) && data.fps >= 0 ? data.fps : null;
+  const rawServo = typeof data.servoStatus === 'string' ? data.servoStatus.toUpperCase() : null;
+  const servoStatus = ['OPEN', 'CLOSED', 'UNKNOWN'].includes(rawServo) ? rawServo : null;
+  const rawMode = typeof data.portalMode === 'string' ? data.portalMode.toLowerCase() : null;
+  const portalMode = ['manual', 'otomatis'].includes(rawMode) ? rawMode : null;
+  return { esp32Connected, fps, servoStatus, portalMode };
+}
+
 const dayKey = date => date.toLocaleDateString('sv-SE', { timeZone: TIME_ZONE });
 const dateTime = value => value
   ? new Date(value).toLocaleString('id-ID', { timeZone: TIME_ZONE })
@@ -47,6 +61,7 @@ export default function App({
   const [stream, setStream] = useState('idle');
   const [pending, setPending] = useState('');
   const [refresh, setRefresh] = useState(0);
+  const [deviceStatus, setDeviceStatus] = useState(null);
 
   const profile = useRef(null);
   const profileButton = useRef(null);
@@ -72,6 +87,7 @@ export default function App({
         api('/cameras'),
         api('/analytics/history?limit=100'),
         api(`/analytics/statistics?${query}`),
+        ...(SYSTEM_STATUS_PATH ? [api(SYSTEM_STATUS_PATH)] : []),
       ]);
 
       if (stopped) return;
@@ -92,7 +108,13 @@ export default function App({
         setStats({ ...results[3].value, day: today });
       }
 
-      const labels = ['Koneksi', 'Kamera', 'Riwayat', 'Statistik'];
+      if (SYSTEM_STATUS_PATH) {
+        setDeviceStatus(results[4]?.status === 'fulfilled'
+          ? normalizeSystemStatus(results[4].value)
+          : null);
+      }
+
+      const labels = ['Koneksi', 'Kamera', 'Riwayat', 'Statistik', 'Status perangkat'];
 
       setErrors(results.flatMap((result, index) =>
         result.status === 'rejected'
@@ -206,22 +228,29 @@ export default function App({
     ['Total Deteksi', total, Camera],
   ];
 
-  const details = [
-    ['Jenis Kendaraan', vehicleLabel(current?.vehicleType)],
-    ['Tracking ID', current?.vehicleId || '—'],
-    ['Confidence', current ? percent(current.confidence) : '—'],
-    ['Zona Trigger', current ? current.inZone ? 'Di dalam zona' : 'Di luar zona' : '—'],
-    ['Strobo', current ? current.strobo ? 'Terdeteksi' : 'Tidak terdeteksi' : '—'],
-    ['Brightness', current ? percent(current.brightness) : '—'],
-    ['Latensi', current ? `${current.latencyMs} ms` : '—'],
-  ];
+const details = [
+  ['Jenis Kendaraan', vehicleLabel(current?.vehicleType)],
+  ['Tracking ID', current?.vehicleId || '—'],
+  ['Confidence', current ? percent(current.confidence) : '—'],
+  ['Zona Trigger', current ? current.inZone ? 'Di dalam zona' : 'Di luar zona' : '—'],
+  ['Strobo', (() => {
+    const strobo = current?.strobeDetected ?? current?.strobo;
+    return strobo === true ? 'Aktif' : strobo === false ? 'Tidak aktif' : 'Belum tersedia';
+  })()],
+  ['Latensi', current?.latencyMs != null ? `${current.latencyMs} ms` : '—'],
+];
 
+  const esp32Label = deviceStatus?.esp32Connected === true ? 'Terhubung'
+    : deviceStatus?.esp32Connected === false ? 'Terputus' : 'Belum tersedia';
+  const servoLabel = deviceStatus?.servoStatus || 'Belum tersedia';
+  const fpsLabel = deviceStatus?.fps != null ? `${deviceStatus.fps.toFixed(1)} FPS` : '—';
+  const isManualConfirmed = deviceStatus?.portalMode === 'manual';
   const systemItems = [
     [Camera, 'Camera', cameraLabel, stream === 'live' ? 'g' : 'n'],
-    [Wifi, 'ESP32-S3', 'Belum tersedia', 'n'],
-    [Activity, 'FPS', '—', 'b'],
-    [Clock3, 'Latency terakhir', current ? `${current.latencyMs} ms` : '—', 'b'],
-    [Settings, 'Servo', 'Belum tersedia', 'n'],
+    [Wifi, 'ESP32-S3', esp32Label, deviceStatus?.esp32Connected === true ? 'g' : 'n'],
+    [Activity, 'FPS', fpsLabel, deviceStatus?.fps != null ? 'b' : 'n'],
+    [Clock3, 'Latency terakhir', current?.latencyMs != null ? `${current.latencyMs} ms` : '—', 'b'],
+    [Settings, 'Servo', servoLabel, deviceStatus?.servoStatus && deviceStatus.servoStatus !== 'UNKNOWN' ? 'g' : 'n'],
   ];
 
   return (
@@ -449,7 +478,7 @@ export default function App({
                           key={mode}
                           type="button"
                           disabled={busy || health !== 'online'}
-                          className={current?.portalMode === mode ? 'on' : ''}
+                          className={deviceStatus?.portalMode === mode ? 'on' : ''}
                           onClick={() => command({ mode })}
                         >
                           {title} MODE
@@ -461,7 +490,7 @@ export default function App({
                       <button
                         type="button"
                         className="open"
-                        disabled={busy || health !== 'online'}
+                        disabled={busy || health !== 'online' || !isManualConfirmed}
                         onClick={() => command({ aksi: 'buka' })}
                       >
                         Buka Portal
@@ -469,7 +498,7 @@ export default function App({
                       <button
                         type="button"
                         className="close"
-                        disabled={busy || health !== 'online'}
+                        disabled={busy || health !== 'online' || !isManualConfirmed}
                         onClick={() => command({ aksi: 'tutup' })}
                       >
                         Tutup Portal
@@ -478,6 +507,7 @@ export default function App({
 
                     <div className="sl-wait" role="status">
                       {busy ? 'Mengirim perintah…' : pending || 'Siap mengirim perintah'}
+                      {!deviceStatus?.portalMode && <span> · Menunggu konfirmasi mode dari backend</span>}
                     </div>
                   </section>
                 </div>
@@ -487,16 +517,17 @@ export default function App({
                     <Head Icon={ShieldCheck} title="Log Kendaraan" />
                     <div className="sl-log-scroll">
                       <table className="sl-table">
-                        <thead><tr><th>JENIS KENDARAAN</th><th>TIMESTAMP</th></tr></thead>
+                        <thead><tr><th>JENIS KENDARAAN</th><th>TRACKING ID</th><th>TIMESTAMP</th></tr></thead>
                         <tbody>
                           {events.map(event => (
                             <tr key={event._id}>
                               <td>{vehicleLabel(event.vehicleType)}</td>
+                              <td>{event.vehicleId ?? '—'}</td>
                               <td className="t">{dateTime(event.detectedAt)}</td>
                             </tr>
                           ))}
                           {!events.length && (
-                            <tr><td colSpan="2">
+                            <tr><td colSpan="3">
                               {loading ? 'Memuat riwayat…' : 'Belum ada riwayat kendaraan.'}
                             </td></tr>
                           )}
@@ -533,8 +564,8 @@ export default function App({
                     <p className="sl-muted">Rekap hari ini · 00.00–23.59 WIB</p>
                   </section>
 
-                  <section className="sl-card">
-                    <Head Icon={Activity} title="Distribusi Kendaraan Hari Ini" />
+                  <section className="sl-card sl-distribution">
+                      <Head Icon={Activity} title="Distribusi Kendaraan Hari Ini" />
                     <div className="sl-dn">
                       <div
                         className="sl-donut"
