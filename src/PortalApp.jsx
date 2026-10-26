@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bus, Camera, LockKeyhole, Users, LogIn, RefreshCw } from 'lucide-react';
 import Dashboard from './App.jsx';
-import { createApi } from './api.js';
+import { API_URL, createApi } from './api.js';
 import Login from './login.jsx';
 import { canNavigate } from './access.js';  
 
@@ -35,7 +35,7 @@ export default function PortalApp() {
   };
   return <Dashboard api={api} token={session.token} user={session.user} page={canNavigate(session.user.role, page) ? page : 'dashboard'} onNavigate={navigate} onLogout={() => logout()}>
     {page === 'accounts' && session.user.role === 'admin' && <><Accounts api={api} user={session.user}/><AccessRequests api={api}/></>}
-    {page === 'cameras' && session.user.role === 'admin' && <Cameras api={api} user={session.user}/>}
+    {page === 'cameras' && session.user.role === 'admin' && <Cameras api={api} token={session.token} user={session.user}/>}
     {page === 'password' && session.user.role === 'admin' && <Password api={api}/>}
   </Dashboard>;
 }
@@ -48,6 +48,69 @@ function PageTitle({ icon, title, description }) {
 }
 function Feedback({ error, success }) {
   return <>{error && <div className="form-error" role="alert">{error}</div>}{success && <div className="form-success" role="status">{success}</div>}</>;
+}
+
+function ZoneEditor({ camera, token, points, onChange, disabled }) {
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageError, setImageError] = useState('');
+  const svgRef = useRef(null);
+
+  useEffect(() => {
+    if (!camera?.id) {
+      setImageUrl('');
+      setImageError('');
+      return undefined;
+    }
+    const controller = new AbortController();
+    let objectUrl;
+    setImageError('');
+    fetch(`${API_URL}/stream/snapshot/${encodeURIComponent(camera.id)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal
+    })
+      .then(async response => {
+        if (!response.ok) throw new Error((await response.json().catch(() => ({}))).message || 'Frame kamera belum tersedia.');
+        return response.blob();
+      })
+      .then(blob => {
+        objectUrl = URL.createObjectURL(blob);
+        setImageUrl(objectUrl);
+      })
+      .catch(error => {
+        if (!controller.signal.aborted) setImageError(error.message);
+      });
+    return () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [camera?.id, token]);
+
+  function addPoint(event) {
+    if (disabled || !svgRef.current || points.length >= 20) return;
+    const bounds = svgRef.current.getBoundingClientRect();
+    onChange([...points, {
+      x: Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)),
+      y: Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height))
+    }]);
+  }
+
+  const polygon = points.map(point => `${point.x * 100},${point.y * 100}`).join(' ');
+  return <div>
+    <p className="manage-note">Klik frame untuk membuat polygon. Minimal 3 titik; titik-titik disimpan sebagai koordinat relatif 0–1.</p>
+    <div style={{ position: 'relative', width: '100%', maxWidth: 640, aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: 12, background: '#172944' }}>
+      {imageUrl && <img src={imageUrl} alt="Pratinjau frame kamera" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}/>}
+      {!imageUrl && <div style={{ display: 'grid', height: '100%', placeItems: 'center', padding: 20, color: '#dce7f7', textAlign: 'center' }}>{imageError || 'Belum ada frame kamera untuk dijadikan acuan.'}</div>}
+      <svg ref={svgRef} viewBox="0 0 100 100" preserveAspectRatio="none" onClick={addPoint} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', cursor: disabled ? 'default' : 'crosshair' }}>
+        {points.length >= 3 && <polygon points={polygon} fill="#347bf044" stroke="#8bb2fa" strokeWidth="0.7" vectorEffect="non-scaling-stroke"/>}
+        {points.map((point, index) => <circle key={`${point.x}-${point.y}-${index}`} cx={point.x * 100} cy={point.y * 100} r="1.3" fill="#fff" stroke="#347bf0" strokeWidth="0.5" vectorEffect="non-scaling-stroke"/>)}
+      </svg>
+    </div>
+    <div className="form-actions" style={{ marginTop: 10 }}>
+      <button className="secondary-button" type="button" disabled={disabled || !points.length} onClick={() => onChange(points.slice(0, -1))}>Undo titik</button>
+      <button className="secondary-button" type="button" disabled={disabled || !points.length} onClick={() => onChange([])}>Hapus zona</button>
+      <small>{points.length} titik</small>
+    </div>
+  </div>;
 }
 function useRecords(api, path, key) {
   const [rows, setRows] = useState([]);
@@ -133,7 +196,7 @@ function Accounts({ api, user }) {
   </div>;
 }
 
-function Cameras({ api, user }) {
+function Cameras({ api, token, user }) {
   const records = useRecords(api, '/cameras', 'cameras');
   const [staff, setStaff] = useState([]);
   const [staffError, setStaffError] = useState('');
@@ -144,6 +207,7 @@ function Cameras({ api, user }) {
   const [connections, setConnections] = useState({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [zone, setZone] = useState([]);
   useEffect(() => {
     if (user.role === 'admin') api('/accounts').then(data => setStaff(data.accounts.filter(a => a.role === 'petugas'))).catch(err => setStaffError(err.message));
   }, [api, user.role]);
@@ -151,13 +215,13 @@ function Cameras({ api, user }) {
     event.preventDefault();
     const form = event.currentTarget;
     const values = new FormData(form);
-    const body = { name: values.get('name').trim(), rtspUrl: values.get('rtspUrl').trim(), isActive: values.get('isActive') === 'on' };
+    const body = { name: values.get('name').trim(), rtspUrl: values.get('rtspUrl').trim(), isActive: values.get('isActive') === 'on', detectionZone: zone.length >= 3 ? zone : null };
     if (user.role === 'admin' && !staffError) body.assignedPetugas = values.get('assignedPetugas') || null;
     setBusy(true); setError(''); setSuccess('');
     try {
       await api(editing ? `/cameras/${editing.id}` : '/cameras', { method: editing ? 'PATCH' : 'POST', body });
       if (editing) setConnections(current => { const next = { ...current }; delete next[editing.id]; return next; });
-      setSuccess('Kamera berhasil disimpan.'); setEditing(null); form.reset(); await records.reload();
+      setSuccess('Kamera berhasil disimpan.'); setEditing(null); setZone([]); form.reset(); await records.reload();
     } catch (err) { setError(err.message); }
     finally { setBusy(false); }
   }
@@ -178,12 +242,13 @@ function Cameras({ api, user }) {
             <p>Petugas: {staff.find(a => a.id === row.assignedPetugas)?.username || row.assignedPetugas || 'Belum ditugaskan'}</p>
             {connection && <p className={connection.connected ? 'connection-ok' : 'connection-failed'}>{connection.connected ? 'Port kamera terhubung' : `Tidak terhubung: ${connection.reason || 'Tidak tersedia'}`}<br/><small>Diperiksa: {new Date(connection.checkedAt).toLocaleString('id-ID')}</small></p>}
           </div>
-          <div className="record-actions"><button disabled={busy || checking !== null} onClick={() => check(row)}>{checking === row.id ? 'Memeriksa…' : 'Cek koneksi'}</button><button disabled={busy} onClick={() => { setEditing(row); setError(''); }}>Edit</button><button className="danger-text" disabled={busy} onClick={() => setDeleting(row)}>Hapus</button></div>
+          <div className="record-actions"><button disabled={busy || checking !== null} onClick={() => check(row)}>{checking === row.id ? 'Memeriksa…' : 'Cek koneksi'}</button><button disabled={busy} onClick={() => { setEditing(row); setZone(row.detectionZone || []); setError(''); }}>Edit</button><button className="danger-text" disabled={busy} onClick={() => setDeleting(row)}>Hapus</button></div>
         </div>;
       })}</div></RecordList>
       <section className="manage-card"><h2>{editing ? 'Edit kamera' : 'Tambah kamera'}</h2><form className="manage-form" key={editing?.id || 'new'} onSubmit={save}>
         <Field label="Nama kamera"><input name="name" defaultValue={editing?.name || ''} required disabled={busy}/></Field>
         <Field label="Alamat RTSP"><input name="rtspUrl" type="url" defaultValue={editing?.rtspUrl || ''} placeholder="rtsp://192.168.1.100:554/stream" pattern="rtsps?://.+" required disabled={busy}/></Field>
+        {editing && <ZoneEditor camera={editing} token={token} points={zone} onChange={setZone} disabled={busy}/>}
         {user.role === 'admin' && <><Field label="Petugas"><select name="assignedPetugas" defaultValue={editing?.assignedPetugas || ''} disabled={busy || !!staffError}>
           <option value="">Belum ditugaskan</option>
           {editing?.assignedPetugas && !staff.some(a => a.id === editing.assignedPetugas) && <option value={editing.assignedPetugas}>{editing.assignedPetugas}</option>}
@@ -191,7 +256,7 @@ function Cameras({ api, user }) {
         </select></Field>{staffError && <div className="form-error">Daftar petugas gagal dimuat: {staffError}</div>}</>}
         <label className="check-field"><input name="isActive" type="checkbox" defaultChecked={editing?.isActive ?? true} disabled={busy}/>Kamera aktif</label>
         <button className="primary-button" disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan kamera'}</button>
-        {editing && <button className="secondary-button" type="button" disabled={busy} onClick={() => setEditing(null)}>Batal edit</button>}
+        {editing && <button className="secondary-button" type="button" disabled={busy} onClick={() => { setEditing(null); setZone([]); }}>Batal edit</button>}
       </form></section>
     </div>
     <p className="manage-note">Cek koneksi memeriksa port kamera. Live stream dan kontrol portal tersedia di Dashboard.</p>

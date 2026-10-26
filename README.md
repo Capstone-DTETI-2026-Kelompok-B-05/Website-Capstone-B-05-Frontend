@@ -47,6 +47,8 @@ Data dashboard disegarkan setiap 5 detik, tanpa request polling yang tumpang tin
 
 Live stream memakai fetch + Bearer JWT + parser multipart MJPEG, bukan URL RTSP langsung dan bukan token di query string. JWT hanya disimpan di sessionStorage tab. Ada batas ukuran frame dan timeout 15 detik tanpa frame; pengguna bisa mencoba kembali. Perlu patch rute stream backend yang sudah diterapkan dalam capstone-be paket ini. Sumber video rute ini adalah framePipeline: kamera harus mengirim JPEG ke camera-ingest memakai ID kamera yang sama. Menyimpan URL RTSP di Kelola Kamera saja tidak otomatis menghasilkan video.
 
+Admin dapat mengedit kamera yang sudah disimpan untuk menggambar polygon zona deteksi pada frame terakhir. Titik zona disimpan relatif terhadap frame (0–1), sehingga tidak bergantung pada ukuran preview. Saat zona tersedia, backend hanya memproses hasil deteksi yang titik bawah-tengah bounding box-nya berada di dalam polygon.
+
 Tombol buka/tutup dan mode mengirim perintah nyata ke backend MQTT. HTTP 202 berarti pesan dipublikasikan; bukan konfirmasi servo bergerak. Backend sumber belum menyediakan GET status portal/perangkat. Karena itu status OPEN/CLOSED dan AUTO/MANUAL pada dashboard diberi label status dari deteksi terakhir; frontend tidak mengubahnya secara optimistis saat perintah dikirim. Frame video, status broker, servo, FPS, dan status inference tidak diganti dengan nilai simulasi.
 
 Hubungi admin membuka pengajuan akses. Admin menyetujui/menolak di bagian bawah Kelola Akun. Backend tidak mengirim email otomatis: admin perlu menyampaikan kredensial awal secara pribadi. Petugas yang memakai password awal diberi pesan untuk menghubungi admin; halaman petugas tetap hanya Dashboard sesuai permintaan.
