@@ -12,6 +12,7 @@ import './smooth.css';
 const COLORS = ['#347BF0', '#5B93F5', '#8BB2FA', '#BCD3FF', '#233c60', '#91a1b7'];
 const TIME_ZONE = 'Asia/Jakarta';
 const SYSTEM_STATUS_PATH = (import.meta.env.VITE_SYSTEM_STATUS_PATH || '').trim();
+const DETECTION_DISPLAY_MS = 5000;
 
 function normalizeSystemStatus(response) {
   const data = response?.data ?? response;
@@ -194,6 +195,11 @@ export default function App({
 
   const dailyStats = stats?.day === dayKey(now) ? stats : null;
   const current = events[0];
+  const currentDetection = current?.box
+    && current.detectedAt
+    && Date.now() - new Date(current.detectedAt).getTime() <= DETECTION_DISPLAY_MS
+    ? current
+    : null;
   const rows = dailyStats?.byVehicleType || [];
   const total = dailyStats?.summary?.totalDetections || 0;
   const count = type => rows.find(row => row._id === type)?.count || 0;
@@ -244,7 +250,6 @@ const details = [
     : deviceStatus?.esp32Connected === false ? 'Terputus' : 'Belum tersedia';
   const servoLabel = deviceStatus?.servoStatus || 'Belum tersedia';
   const fpsLabel = deviceStatus?.fps != null ? `${deviceStatus.fps.toFixed(1)} FPS` : '—';
-  const isManualConfirmed = deviceStatus?.portalMode === 'manual';
   const systemItems = [
     [Camera, 'Camera', cameraLabel, stream === 'live' ? 'g' : 'n'],
     [Wifi, 'ESP32-S3', esp32Label, deviceStatus?.esp32Connected === true ? 'g' : 'n'],
@@ -417,6 +422,7 @@ const details = [
                     <LiveFeed
                       cameraId={cameraId}
                       token={token}
+                      detection={currentDetection}
                       onExpired={handleExpired}
                       onStatus={setStream}
                     />
@@ -490,7 +496,7 @@ const details = [
                       <button
                         type="button"
                         className="open"
-                        disabled={busy || health !== 'online' || !isManualConfirmed}
+                        disabled={busy || health !== 'online'}
                         onClick={() => command({ aksi: 'buka' })}
                       >
                         Buka Portal
@@ -498,7 +504,7 @@ const details = [
                       <button
                         type="button"
                         className="close"
-                        disabled={busy || health !== 'online' || !isManualConfirmed}
+                        disabled={busy || health !== 'online'}
                         onClick={() => command({ aksi: 'tutup' })}
                       >
                         Tutup Portal

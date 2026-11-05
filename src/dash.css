@@ -95,6 +95,9 @@
 .dash .sl-fs small { font-size: 11px; color: var(--ink4); }
 .dash .sl-fs b { font-size: 13px; }
 .dash .sl-feed svg, .dash .sl-feed img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.dash .sl-feed .sl-detection-overlay { object-fit: fill; pointer-events: none; }
+.dash .sl-feed .sl-detection-box { fill: none; stroke-width: 6; vector-effect: non-scaling-stroke; }
+.dash .sl-feed .sl-detection-label { stroke-width: 2; paint-order: stroke; font-weight: 700; }
 .dash .sl-osd { position: absolute; left: 10px; right: 10px; display: flex; justify-content: space-between; color: #fff; font: 10px ui-monospace, Consolas, monospace; text-shadow: 0 1px 3px #12203a; }
 .dash .sl-osd.top { top: 8px; }
 .dash .sl-osd.bottom { bottom: 8px; }
