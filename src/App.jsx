@@ -63,6 +63,7 @@ export default function App({
   const [pending, setPending] = useState('');
   const [refresh, setRefresh] = useState(0);
   const [deviceStatus, setDeviceStatus] = useState(null);
+  const [liveDetection, setLiveDetection] = useState(null);
 
   const profile = useRef(null);
   const profileButton = useRef(null);
@@ -140,6 +141,30 @@ export default function App({
   }, [api, refresh]);
 
   useEffect(() => {
+    if (!cameraId) {
+      setLiveDetection(null);
+      return undefined;
+    }
+
+    let active = true;
+    const loadLiveDetection = async () => {
+      try {
+        const response = await api(`/analytics/live/${encodeURIComponent(cameraId)}`);
+        if (active) setLiveDetection(response.detections?.[0] ?? null);
+      } catch {
+        if (active) setLiveDetection(null);
+      }
+    };
+
+    loadLiveDetection();
+    const timer = setInterval(loadLiveDetection, 500);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [api, cameraId]);
+
+  useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -200,6 +225,8 @@ export default function App({
     && Date.now() - new Date(current.detectedAt).getTime() <= DETECTION_DISPLAY_MS
     ? current
     : null;
+  const liveDetectionIsFresh = liveDetection?.timestamp
+    && Date.now() - new Date(liveDetection.timestamp).getTime() <= 3000;
   const rows = dailyStats?.byVehicleType || [];
   const total = dailyStats?.summary?.totalDetections || 0;
   const count = type => rows.find(row => row._id === type)?.count || 0;
@@ -422,7 +449,7 @@ const details = [
                     <LiveFeed
                       cameraId={cameraId}
                       token={token}
-                      detection={currentDetection}
+                      detection={liveDetectionIsFresh && liveDetection?.box ? liveDetection : currentDetection}
                       onExpired={handleExpired}
                       onStatus={setStream}
                     />
